@@ -16,13 +16,14 @@ CREATE TABLE public.entries
     windows boolean,
     ironing boolean,
     ratings_received_count integer,
-    verification_level character varying(30) COLLATE pg_catalog."default",
+    verification_level character varying(255) COLLATE pg_catalog."default",
     documents character varying[] COLLATE pg_catalog."default",
     language_skills character varying[] COLLATE pg_catalog."default",
     instabook_enabled boolean,
     performed_cleanings_count integer,
     experience_description character varying COLLATE pg_catalog."default",
-    experience_headline character varying COLLATE pg_catalog."default"
+    experience_headline character varying COLLATE pg_catalog."default",
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 )
 
 TABLESPACE pg_default;
