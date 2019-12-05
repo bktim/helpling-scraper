@@ -1,3 +1,4 @@
+tabulate
 certifi==2019.9.11
 chardet==3.0.4
 ddt==1.2.1
@@ -11,3 +12,4 @@ Rx==1.6.1
 sgqlc==8.1
 six==1.13.0
 urllib3==1.25.7
+psycopg2==2.8.4
