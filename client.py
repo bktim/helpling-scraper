@@ -3,9 +3,10 @@ from typing import List, Dict
 import requests
 from sgqlc.endpoint.http import HTTPEndpoint
 from sgqlc.operation import Operation
-from tabulate import tabulate
+# from tabulate import tabulate
 
 import helpling_schema
+import db
 
 CandidateList = List[helpling_schema.DecoratedPotentialCandidateEdge]
 
@@ -13,7 +14,7 @@ BASE_URL = "https://www.helpling.de/api/"
 
 DEFAULT_SEARCH_PARAMETERS = {
     "time": "14:00null",
-    "date": "30/11/2019",
+    "date": "07/12/2019",
     "repeat": "true",
     "frequency": "week",
     "duration": 12600,
@@ -110,11 +111,15 @@ def get_candidates(postcodes: List[int], parameters: Dict = None) -> List[Candid
 
 
 if __name__ == "__main__":
-    for c in get_candidates([90425], {"date": "30/11/2019"}):
-        as_dicts = [{"price_per_hour": c.node.price_per_hour, **c.node.provider.__dict__} for c in c]
+    postcodes = [10115, 14059]
+    params = {"date": "07/12/2019"}
+    for i, c in enumerate(get_candidates(postcodes, params)):
+        as_dicts = [{**c.node.provider.__dict__,"postcode": postcodes[i],"date": params["date"],"price_per_hour": c.node.price_per_hour, "avg_rating": c.node.provider.avg_rating.total, "experience_description": c.node.provider.experience.experience_description, "experience_headline": c.node.provider.experience.experience_headline} for c in c]
         for d in as_dicts:
             d.pop("__selection_list__")
             d.pop("__fields_cache__")
             d.pop("__json_data__")
+            d.pop("experience")
 
-        print(tabulate(as_dicts))
+        # print(as_dicts)
+        db.insert_entries(as_dicts)
