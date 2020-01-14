@@ -3,10 +3,11 @@ from typing import List, Dict
 import requests
 from sgqlc.endpoint.http import HTTPEndpoint
 from sgqlc.operation import Operation
-# from tabulate import tabulate
-
+from datetime import datetime, timedelta
 import helpling_schema
 import db
+import utils
+import logging
 
 CandidateList = List[helpling_schema.DecoratedPotentialCandidateEdge]
 
@@ -31,8 +32,11 @@ gql_endpoint = HTTPEndpoint(BASE_URL + "v2/rr", base_headers={
     "User-Agent": "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"
 })
 
+LOG_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + '-output.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
-def create_bid(postcode: int, **kwargs) -> str:
+
+def create_bid(postcode: str, **kwargs) -> str:
     """
     Query the helpling API to create a new bid. Then, set the given parameters (or default values configured in
     ``DEFAULT_SEARCH_PARAMETERS``) to it. This is the first step to scraping offers for a region.
@@ -99,7 +103,7 @@ def get_bid(bid_id: str) -> helpling_schema.CustomerBid:
     return (op + data).customer_bid
 
 
-def get_candidates(postcodes: List[int], parameters: Dict = None) -> List[CandidateList]:
+def get_candidates(postcodes: List[str], parameters: Dict = None) -> List[CandidateList]:
     """
     Find potential candidates for a list of postcodes.
     :param postcodes:
@@ -107,19 +111,30 @@ def get_candidates(postcodes: List[int], parameters: Dict = None) -> List[Candid
     """
     parameters = parameters or {}
     for postcode in postcodes:
-        yield get_candidates_for_bid(create_bid(postcode, **parameters))
+        try:
+            yield get_candidates_for_bid(create_bid(postcode, **parameters))
+        except Exception as e:
+            logging.warning(e)
+            continue
 
 
 if __name__ == "__main__":
-    postcodes = [10115, 14059]
-    params = {"date": "07/12/2019"}
+    postcodes = utils.read_plz('plz_full.csv')
+    date = datetime.today() + timedelta(days=2)
+    date_str = date.strftime('%Y-%m-%d')
+    params = {"date": date_str}
     for i, c in enumerate(get_candidates(postcodes, params)):
-        as_dicts = [{**c.node.provider.__dict__,"postcode": postcodes[i],"date": params["date"],"price_per_hour": c.node.price_per_hour, "avg_rating": c.node.provider.avg_rating.total, "experience_description": c.node.provider.experience.experience_description, "experience_headline": c.node.provider.experience.experience_headline} for c in c]
+        as_dicts = [{**c.node.provider.__dict__, "postcode": postcodes[i], "date": params["date"],
+                     "price_per_hour": c.node.price_per_hour, "avg_rating": c.node.provider.avg_rating.total,
+                     "experience_description": c.node.provider.experience.experience_description,
+                     "experience_headline": c.node.provider.experience.experience_headline} for c in c]
         for d in as_dicts:
             d.pop("__selection_list__")
             d.pop("__fields_cache__")
             d.pop("__json_data__")
             d.pop("experience")
 
-        # print(as_dicts)
-        db.insert_entries(as_dicts)
+        try:
+            db.insert_entries(as_dicts)
+        except Exception as e:
+            logging.error(e)
