@@ -32,8 +32,8 @@ gql_endpoint = HTTPEndpoint(BASE_URL + "v2/rr", base_headers={
     "User-Agent": "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"
 })
 
-LOG_FILENAME = datetime.now().strftime("%Y%m%d-%H%M%S") + '-output.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+LOG_FILENAME = datetime.now().strftime("%Y%m%d") + '-output.log'
+logging.basicConfig(filename=LOG_FILENAME, filemode='a', format='%(name)s - %(levelname)s - %(message)s')
 
 
 def create_bid(postcode: str, **kwargs) -> str:
