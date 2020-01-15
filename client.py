@@ -115,6 +115,7 @@ def get_candidates(postcodes: List[str], parameters: Dict = None) -> List[Candid
             yield get_candidates_for_bid(create_bid(postcode, **parameters))
         except Exception as e:
             logging.warning(e)
+            yield []
             continue
 
 
